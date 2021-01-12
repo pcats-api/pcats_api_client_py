@@ -1,13 +1,13 @@
 import requests
 import sys
-import numpy as np
-from numpy import savetxt
 import time
 
 def _url(path):
     return 'https://pcats.research.cchmc.org' + path
 
 def job_status(jobid):
+    if jobid is None:
+        return "Error"
     res=requests.get(_url('/api/job/{}/status'.format(jobid)))
     if res.status_code==200:
         res_json = res.json()
@@ -17,9 +17,11 @@ def job_status(jobid):
 
 
 def wait_for_result(jobid):
+    if jobid is None:
+        return "Error"
     while True:
         status = job_status(jobid)
-        if status is None or status=="Error":
+        if status is None or status.startswith("Error"):
             return "Error"
         if status=="Done":
             return status
@@ -29,10 +31,12 @@ def ret_jobid(res):
     if res.status_code==200:
         res_json = res.json()
         if 'jobid' in res_json:
-            return res_json['jobid'][0]
+            return res_json['jobid']
     return None
 
-def staticgp(dataurl, outcome, treatment, x_explanatory=None, x_confounding=None,
+def staticgp(datafile=None, dataref=None,
+             outcome=None, treatment=None, 
+             x_explanatory=None, x_confounding=None,
              tr_hte=None, tr2_values=None,
              burn_num=500, mcmc_num=500, outcome_type="Continuous", 
              outcome_lb=None, outcome_ub=None,
@@ -46,10 +50,11 @@ def staticgp(dataurl, outcome, treatment, x_explanatory=None, x_confounding=None
              pr_values=None,
              method="BART",
              x_categorical=None,
-             mi_dataurl=None):
+             mi_datafile=None):
 
     data={
-        'data': (dataurl, open(dataurl, 'rb')),
+        'data': (datafile, open(datafile, 'rb') if datafile!=None else None ),
+        'datafile': (None, dataref),
         'outcome': (None, outcome),
         'treatment': (None, treatment),
         'x.explanatory': (None, x_explanatory),
@@ -71,13 +76,13 @@ def staticgp(dataurl, outcome, treatment, x_explanatory=None, x_confounding=None
         'tr2.type': (None, tr2_type),
         'method': (None, method),
         'x.categorical': (None, x_categorical),
-        'mi.data':  (mi_dataurl, open(mi_dataurl, 'rb')
-                     if mi_dataurl!=None else None )}
+        'mi.data':  (mi_datafile, open(mi_datafile, 'rb')
+                     if mi_datafile!=None else None )}
 
     res=requests.post(_url('/api/staticgp'), files=data);
     return ret_jobid(res)
 
-def print(jobid):
+def _print(jobid):
     return requests.get(_url(
         '/api/job/{}/print'.format(jobid))).content.decode("utf-8") 
 
@@ -97,8 +102,9 @@ def _printCATE(jobid):
         '/api/job/{}/printCATE'.format(jobid))).content.decode("utf-8") 
 
 
-def dynamicgp(dataurl, stg1_outcome, stg1_treatment, 
-              stg2_outcome, stg2_treatment,
+def dynamicgp(datafile=None, dataref=None,
+              stg1_outcome=None, stg1_treatment=None, 
+              stg2_outcome=None, stg2_treatment=None,
               stg1_x_explanatory=None, stg1_x_confounding=None,
               stg1_tr_hte=None, stg1_tr_values=None, stg1_outcome_type="Continuous",
               stg1_tr_type="Discrete",
@@ -116,10 +122,12 @@ def dynamicgp(dataurl, stg1_outcome, stg1_treatment,
               burn_num=500, mcmc_num=500,
               method="BART",
               x_categorical=None,
-              mi_dataurl=None):
+              mi_datafile=None,
+              mi_dataref=None):
 
     data={
-        'data': (dataurl, open(dataurl, 'rb')),
+        'data': (datafile, open(datafile, 'rb') if datafile!=None else None ),
+        'datafile': (None, dataref),
         'stg1.outcome': (None, stg1_outcome),
         'stg1.treatment': (None, stg1_treatment),
         'stg1.x.explanatory': (None, stg1_x_explanatory),
@@ -156,7 +164,32 @@ def dynamicgp(dataurl, stg1_outcome, stg1_treatment,
         'mcmc.num': (None, mcmc_num),
         'x.categorical': (None, x_categorical),
         'method': (None, method),
-        'mi.data':  (mi_dataurl, open(mi_dataurl, 'rb') if mi_dataurl!=None else None )}
+        'mi.data':  (mi_datafile, open(mi_datafile, 'rb') if mi_datafile!=None else None ),
+        'mi.datafile': (None, mi_dataref)}
 
     res=requests.post(_url('/api/dynamicgp'), files=data);
     return ret_jobid(res)
+
+def dynamicgp_cate(jobid, x, control_tr, treat_tr, pr_values=None):
+    data={
+        'x': (None, x),
+        'control.tr': (None, control_tr),
+        'treat.tr': (None, treat_tr),
+        'pr.values': (None, pr_values)}
+
+    res=requests.post(_url(
+        '/api/job/{}/dynamicgp.cate'.format(jobid)), files=data);
+    return ret_jobid(res)
+
+def uploadfile(datafile):
+    data={
+        'data': (datafile, open(datafile, 'rb') if datafile!=None else None ),
+        }
+
+    res=requests.post(_url('/api/uploadfile'), files=data);
+    if res.status_code==200:
+        res_json = res.json()
+        if 'fileref' in res_json:
+            return res_json['fileref']
+    return None
+
