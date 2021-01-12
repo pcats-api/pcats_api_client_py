@@ -9,7 +9,7 @@ setup(
     # Needed for dependencies
     # install_requires=['numpy'],
     # *strongly* suggested for sharing
-    version='0.2',
+    version='0.3',
     # The license can be anything you like
     license='MIT',
     description='PCATS REST API Client',

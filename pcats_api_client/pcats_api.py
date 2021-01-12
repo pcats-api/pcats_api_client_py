@@ -82,7 +82,7 @@ def staticgp(datafile=None, dataref=None,
     res=requests.post(_url('/api/staticgp'), files=data);
     return ret_jobid(res)
 
-def _print(jobid):
+def print(jobid):
     return requests.get(_url(
         '/api/job/{}/print'.format(jobid))).content.decode("utf-8") 
 
