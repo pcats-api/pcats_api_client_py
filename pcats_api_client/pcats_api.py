@@ -193,9 +193,13 @@ def uploadfile(datafile):
             return res_json['fileref']
     return None
 
-def ploturl(jobid):
+def ploturl(jobid,plottype=None):
+    if plottype!=None:
+        plottype="/{}".format(plottype)
+    else:
+        plottype="/"
     res=requests.get(_url(
-        '/api/job/{}/ploturl'.format(jobid))).content.decode("utf-8") 
+        '/api/job/{}/ploturl{}'.format(jobid,plottype))).content.decode("utf-8") 
     if res.status_code==200:
         res_json = res.json()
         if 'url' in res_json:
