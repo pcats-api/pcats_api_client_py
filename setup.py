@@ -2,17 +2,18 @@ from setuptools import setup
 
 setup(
     name='pcats_api_client',
-    url='https://github.com/pcats-api/pcatsAPIclientPy',
+    url='https://github.com/pcats-api/pcats_api_client_py',
     author='Michal Kouril',
     author_email='michal.kouril@cchmc.org',
     packages=['pcats_api_client'],
     # Needed for dependencies
-    # install_requires=['numpy'],
+    install_requires=['requests'],
     # *strongly* suggested for sharing
-    version='0.8',
+    version='0.10',
     # The license can be anything you like
     license='MIT',
     description='PCATS REST API Client',
     # We will also need a readme eventually (there will be a warning)
     # long_description=open('README.txt').read(),
+    include_package_data=True,
 )
