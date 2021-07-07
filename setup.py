@@ -9,7 +9,7 @@ setup(
     # Needed for dependencies
     install_requires=['requests'],
     # *strongly* suggested for sharing
-    version='0.10',
+    version='0.10.2',
     # The license can be anything you like
     license='MIT',
     description='PCATS REST API Client',
