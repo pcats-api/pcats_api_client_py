@@ -139,7 +139,7 @@ def staticgp(datafile=None,
     res=requests.post(_url('/api/staticgp'), files=data, headers=headers);
     return ret_jobid(res)
 
-def print(jobid):
+def printgp(jobid):
     """Returns printable representation of the results.
 
     Parameters
