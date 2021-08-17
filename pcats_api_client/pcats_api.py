@@ -6,17 +6,19 @@ def _url(path):
     return 'https://pcats.research.cchmc.org' + path
 
 def job_status(jobid):
-    """Returns the `jobid` status.
+    """Return job status.
+
+    Return status of the previously submitted job
 
     Parameters
     ----------
     jobid : UUID
-            The job id identifier
-            
+            Job ID of the previously submitted job
+
     Returns
     -------
     string
-        Status of the `jobid` computation.
+        status
 
     """
 
@@ -31,11 +33,19 @@ def job_status(jobid):
 
 
 def wait_for_result(jobid):
-    """
+    """Wait while the job status is pending
+
+    Return when the job status is finished (either successfully or otherwise)
+
     Parameters
     ----------
     jobid : UUID
-            The job id identifier
+            Job ID of the previously submitted job
+
+    Returns
+    -------
+    string
+        status
     """
     if jobid is None:
         return "Error"
@@ -87,13 +97,52 @@ def staticgp(datafile=None,
              token=None,
              use_cache=None,
              reuse_cached_jobid=None):
-    """
+    """Performs a data analysis for data with non-adaptive treatment(s).
+
+      Bayesian's Gaussian process regression or Bayesian additive regression tree for data with non-adaptive treatment(s).
+
     Parameters
     ----------
-    datafile : something
-            something
-    dataref : something
-            something
+    datafile File to upload (.csv or .xls)
+    dataref Reference to already uploaded file.
+    method The method to be used. "GP" for GP method and "BART" for BART method. The default value is "BART".
+    outcome The name of the outcome variable.
+    outcome.type Outcome type ("Continuous" or "Discrete"). The default value is "Continuous".
+    outcome.bound_censor The default value is "neither".
+          "neither" if the outcome is not bounded or censored.
+          "bounded" if the outcome is bounded.
+          "censored" if the outcome is censored.
+    outcome.lb Putting a lower bound if the outcome is bounded.
+    outcome.ub Putting a upper bound if the outcome is bounded.
+    outcome.censor.yn Censoring variable if outcome is censored.
+    outcome.censor.lv lower variable of censored interval if outcome is censored.
+    outcome.censor.uv upper variable of censored interval if outcome is censored.
+    outcome.link function for outcome; the default value is "identity".
+          "identity" if no transformation needed.
+          "log" for log transformation.
+          "logit" for logit transformation.
+    treatment The vector of the name of the treatment variables. Users can input at most two treatment variables.
+    x.explanatory The vector of the name of the explanatory variables.
+    x.confounding The vector of the name of the confounding variables.
+    tr.type The type of the first treatment. "Continuous" for continuous treatment and "Discrete" for categorical treatment. The default value is "Discrete".
+    tr2.type The type of the second treatment if available. "Continuous" for continuous treatment and "Discrete" for categorical treatment. The default value is "Discrete".
+    tr.values user-defined values for the calculation of ATE if the first treatment variable is continuous
+    tr2.values user-defined values for the calculation of ATE if the second treatment variable is continuous
+    pr.values An optional vector of user-defined values of c for PrTE.
+    tr.hte An optional vector specifying variables which may have heterogeneous treatment effect with the first treatment variable
+    tr2.hte An optional vector specifying variables which may have heterogeneous treatment effect with the second treatment variable
+    burn.num numeric; the number of MCMC 'burn-in' samples, i.e. number of MCMC to be discarded. The default value is 500.
+    mcmc.num numeric; the number of MCMC samples after 'burn-in'. The default value is 500.
+    x.categorical A vector of the name of categorical variables in data.
+    mi.datafile File to upload (.csv or .xls) that contains the imputed data in the model.
+    mi.dataref Reference to already uploaded file that contains the imputed data in the model.
+    sheet If \code{datafile} or \code{dataref} points to an Excel file this variable specifies which sheet to load.
+    mi.sheet If \code{mi.datafile} or \code{mi.dataurl} points to an Excel file this variable specifies which sheet to load.
+
+    Returns
+    -------
+    UUID
+        jobid
     """
 
     data={
@@ -133,24 +182,31 @@ def staticgp(datafile=None,
     headers=dict()
     if (str(use_cache)=="1"):
         headers["X-API-Cache"]="1"
+    elif (str(use_cache)=="0"):
+        headers["X-API-Cache"]="0"
+
     if (str(reuse_cached_jobid)=="1"):
         headers["X-API-Reuse-Cached-Jobid"]="1"
+    elif (str(reuse_cached_jobid)=="0"):
+        headers["X-API-Reuse-Cached-Jobid"]="0"
 
     res=requests.post(_url('/api/staticgp'), files=data, headers=headers);
     return ret_jobid(res)
 
 def printgp(jobid):
-    """Returns printable representation of the results.
+    """Print job results
+
+   Return formatted string with job results
 
     Parameters
     ----------
     jobid : UUID
-            The job id identifier
+            Job ID of the previously submitted job
             
     Returns
     -------
     string
-        Printable representations of the `jobid` computation.
+        formatted text
 
     """
 
@@ -158,17 +214,19 @@ def printgp(jobid):
         '/api/job/{}/print'.format(jobid))).content.decode("utf-8") 
 
 def results(jobid):
-    """Returns JSON representation of the results.
+    """Return job results
+
+    Return job results
 
     Parameters
     ----------
     jobid : UUID
-            The job id identifier
+            Job ID of the previously submitted job
             
     Returns
     -------
-    string
-        Printable representations of the `jobid` computation.
+    json
+        results
 
     """
 
@@ -182,23 +240,26 @@ def staticgp_cate(jobid,
               pr_values=None,
               use_cache=None,
               reuse_cached_jobid=None):
-    """Returns printable representation of the results.
+    """Get conditional average treatment effect
+
+    Estimate the conditional average treatment effect of user-specified treatment groups.
+
+    The contrast of potential outcomes for the reference group and the treatment group is estimated at each value of x.
+
+    The conditional average treatment effect is estimated based on the sample data. The observations with missing covariates in the model are excluded. For the unspecified variables in the model, the original data is used to estimate the conditional average treatment effect.
 
     Parameters
     ----------
-    jobid : UUID
-            The job id identifier
-    x : UUID
-            The job id identifier
-    control_tr : UUID
-            The job id identifier
-    treat_tr : UUID
-            The job id identifier
-            
+    jobid job id of the "staticGP".
+    x The name of a categorical variable which may have the heterogeneous treatment effect.
+    control.tr The value of the treatment variable as the reference group.
+    treat.tr The value of the treatment variable compared to the reference group.
+    pr.values An optional vector of user-defined values of c for PrCTE.
+
     Returns
     -------
-    string
-        Printable representations of the `jobid` computation.
+    UUID
+        jobid
 
     """
     data={
@@ -272,6 +333,74 @@ def dynamicgp(datafile=None,
               token=None,
               use_cache=None,
               reuse_cached_jobid=None):
+    """Performs a data analysis for data with adaptive treatments.
+
+    Performs Bayesian's Gaussian process regression or Bayesian additive regression tree for data with adaptive treatment(s).
+
+    Parameters
+    ----------
+    datafile File to upload (.csv or .xls)
+    dataref Reference to already uploaded file.
+    method The method to be used. "GP" for GP method and "BART" for BART method. The default value is "BART".
+    stg1.outcome The name of the intermediate outcome variable for stage 1.
+    stg1.treatment The name of the treatment variable for stage 1.
+    stg1.x.explanatory A vector of the name of the explanatory variables for stage 1.
+    stg1.x.confounding A vector of the name of the confounding variables for stage 1.
+    stg1.tr.hte An optional vector specifying categorical variables which may have heterogeneous treatment effect with the treatment variable for stage 1.
+    stg1.outcome.bound_censor The default value is "neither".
+        "neither" if the intermediate outcome is not bounded or censored.
+        "bounded" if the intermediate outcome is bounded.
+        "censored" if the intermediate outcome is censored.
+    stg1.outcome.lb Stage 1 lower bound if the intermediate outcome is bounded.
+    stg1.outcome.ub Stage 1 upper bound if the intermediate outcome is bounded.
+    stg1.outcome.type Intermediate outcome type ("Continuous" or "Discrete") for stage 1.
+    stg1.outcome.censor.yn Censoring variable if the intermediate outcome is censored.
+    stg1.outcome.censor.lv lower variable of censored interval if the intermediate outcome is censored.
+    stg1.outcome.censor.uv upper variable of censored interval if the intermediate outcome is censored.
+    stg1.outcome.link function for the intermediate outcome; the default value is ``identity''.
+        "identity" if no transformation needed.
+        "log" for log transformation.
+        "logit" for logit transformation.
+    stg1.tr.values User-defined values for the calculation of ATE if the treatment variable is continuous for stage 1.
+    stg1.tr.type The type of treatment at stage 1. "Continuous" for continuous treatment and "Discrete" for categorical treatment. The default value is "Discrete".
+    stg1.pr.values An optional vector of user-defined values of c for PrTE at stage 1.
+    stg2.outcome The name of the outcome variable for stage 2.
+    stg2.treatment The name of the treatment variable for stage 2.
+    stg2.x.explanatory A vector of the name of the explanatory variables for stage 2.
+    stg2.x.confounding A vector of the name of the confounding variables for stage 2.
+    stg2.tr1.hte At stage 2, an optional vector specifying cate-gorical variables which may have heterogeneoustreatment effect with the stage 1 treatment variable
+    stg2.tr2.hte At stage 2, an optional vector specifying cate-gorical variables which may have heterogeneoustreatment effect with the stage 2 treatment variable
+    stg2.outcome.bound_censor The default value is "neither".
+        "neither" if the intermediate outcome is not bounded or censored.
+        "bounded" if the intermediate outcome is bounded.
+        "censored" if the intermediate outcome is censored.
+    stg2.outcome.lb Stage 2 lower bound if the outcome is bounded.
+    stg2.outcome.ub Stage 2 upper bound if the outcome is bounded.
+    stg2.outcome.type Outcome type ("Continuous" or "Discrete") for stage 2.
+    stg2.outcome.censor.yn Censoring variable if the outcome is censored.
+    stg2.outcome.censor.lv lower variable of censored interval if the outcome is censored.
+    stg2.outcome.censor.uv upper variable of censored interval if the outcome is censored.
+    stg2.outcome.link function for the outcome; the default value is ``identity''.
+        "identity" if no transformation needed.
+        "log" for log transformation.
+        "logit" for logit transformation.
+    stg2.tr.values User-defined values for the calculation of ATE if the treatment variable is continuous for stage 2.
+    stg2.tr.type The type of treatment at stage 2. "Continuous" for continuous treatment and "Discrete" for categorical treatment. The default value is "Discrete".
+    stg2.pr.values An optional vector of user-defined values of c for PrTE at stage 2.
+    burn.num numeric; the number of MCMC 'burn-in' samples, i.e. number of MCMC to be discarded. The default value is 500.
+    mcmc.num numeric; the number of MCMC samples after 'burn-in'. The default value is 500.
+    x.categorical A vector of the name of categorical variables in data.
+    mi.datafile File to upload (.csv or .xls) that contains the imputed data in the model.
+    mi.dataref Reference to already uploaded file that contains the imputed data in the model.
+    sheet If \code{datafile} or \code{dataref} points to an Excel file this variable specifies which sheet to load.
+    mi.sheet If \code{mi.datafile} or \code{mi.dataurl} points to an Excel file this variable specifies which sheet to load.
+
+    Returns
+    -------
+    UUID
+        jobid
+
+    """
 
     data={
         'data': (datafile, open(datafile, 'rb') if datafile!=None else None ),
@@ -323,8 +452,13 @@ def dynamicgp(datafile=None,
     headers=dict()
     if (str(use_cache)=="1"):
         headers["X-API-Cache"]="1"
+    elif (str(use_cache)=="0"):
+        headers["X-API-Cache"]="0"
+
     if (str(reuse_cached_jobid)=="1"):
         headers["X-API-Reuse-Cached-Jobid"]="1"
+    elif (str(reuse_cached_jobid)=="0"):
+        headers["X-API-Reuse-Cached-Jobid"]="0"
 
     res=requests.post(_url('/api/dynamicgp'), files=data, headers=headers);
     return ret_jobid(res)
@@ -336,6 +470,28 @@ def dynamicgp_cate(jobid,
               pr_values=None,
               use_cache=None,
               reuse_cached_jobid=None):
+    """Get conditional average treatment effect for data with two time points.
+
+    Estimate the conditional average treatment effect of user-specified treatment groups.
+
+    The contrast of potential outcomes for the reference group and the treatment group is estimated at a list of x values if x is not a factor. If x is a factor, the conditional average treatment effect is estimated at each value of levels of x.
+
+    The conditional average treatment effect is estimated based on the sample data. The observations with missing covariates in the model are excluded. For the unspecified variables in the model, the observed data is used to estimate the conditional average treatment effect.
+
+    Parameters
+    ----------
+    jobid job id of the "dynamicGP".
+    x The name of variable which may have the heterogeneous treatment effect. x should be a categorical variable.
+    control.tr A vector of the values of the treatment variables at all stages as the reference group.
+    treat.tr A vector of the values of the treatment variables at all stages compared to the reference group.
+    pr.values An optional vector of user-defined values of c for PrCTE.
+
+    Returns
+    -------
+    UUID
+        jobid
+
+    """
     data={
         'x': (None, x),
         'control.tr': (None, control_tr),
@@ -353,6 +509,18 @@ def dynamicgp_cate(jobid,
     return ret_jobid(res)
 
 def uploadfile(datafile):
+    """Upload a file
+
+    Upload a file
+
+    Parameters
+    ----------
+    filename Filename of a file to upload
+
+    Returns
+    -------
+    backend filename reference
+    """
     data={
         'data': (datafile, open(datafile, 'rb') if datafile!=None else None ),
         }
@@ -365,6 +533,25 @@ def uploadfile(datafile):
     return None
 
 def ploturl(jobid,plottype=None):
+    """Return plot URL
+
+    Return plot URL
+
+    Parameters
+    ----------
+    jobid : UUID
+            Job ID of the previously submitted job
+
+    plottype : string
+            Plot Type
+
+    Returns
+    -------
+    string
+        url
+
+    """
+
     if plottype!=None:
         plottype="/{}".format(plottype)
     else:
