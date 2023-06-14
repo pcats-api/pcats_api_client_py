@@ -80,12 +80,11 @@ def staticgp(datafile=None,
              x_explanatory=None,
              x_confounding=None,
              tr_type="Discrete",
-             tr2_type="Discrete",             
              tr_values=None,
-             tr2_values=None,
-             pr_values=None,
+             c_margin=None,
              tr_hte=None,
-             tr2_hte=None,
+	     time=None,
+	     time_value=None,
              burn_num=500,
              mcmc_num=500,
              x_categorical=None,
@@ -125,12 +124,11 @@ def staticgp(datafile=None,
     x.explanatory The vector of the name of the explanatory variables.
     x.confounding The vector of the name of the confounding variables.
     tr.type The type of the first treatment. "Continuous" for continuous treatment and "Discrete" for categorical treatment. The default value is "Discrete".
-    tr2.type The type of the second treatment if available. "Continuous" for continuous treatment and "Discrete" for categorical treatment. The default value is "Discrete".
     tr.values user-defined values for the calculation of ATE if the first treatment variable is continuous
-    tr2.values user-defined values for the calculation of ATE if the second treatment variable is continuous
-    pr.values An optional vector of user-defined values of c for PrTE.
+    c.margin An optional vector of user-defined values of c for PrTE.
     tr.hte An optional vector specifying variables which may have heterogeneous treatment effect with the first treatment variable
-    tr2.hte An optional vector specifying variables which may have heterogeneous treatment effect with the second treatment variable
+    time
+    time.value
     burn.num numeric; the number of MCMC 'burn-in' samples, i.e. number of MCMC to be discarded. The default value is 500.
     mcmc.num numeric; the number of MCMC samples after 'burn-in'. The default value is 500.
     x.categorical A vector of the name of categorical variables in data.
@@ -153,7 +151,8 @@ def staticgp(datafile=None,
         'x.explanatory': (None, x_explanatory),
         'x.confounding': (None, x_confounding),
         'tr.hte': (None, tr_hte),
-        'tr2.values': (None, tr2_values),
+        'time': (None, time),
+        'time.value': (None, time_value),
         'burn.num': (None, burn_num),
         'mcmc.num': (None, mcmc_num),
         'outcome.lb': (None, outcome_lb),
@@ -165,10 +164,8 @@ def staticgp(datafile=None,
         'outcome.censor.yn': (None, outcome_censor_yn),
         'outcome.link': (None, outcome_link),
         'tr.type': (None, tr_type),
-        'tr2.type': (None, tr2_type),
         'tr.values': (None, tr_values),
-        'tr2.values': (None, tr2_values),
-        'pr.values': (None, pr_values),
+        'c.margin': (None, c_margin),
         'x.categorical': (None, x_categorical),
         'method': (None, method),
         'mi.data':  (mi_datafile, open(mi_datafile, 'rb')
@@ -237,7 +234,7 @@ def staticgp_cate(jobid,
               x, 
               control_tr, 
               treat_tr, 
-              pr_values=None,
+              c_margin=None,
               use_cache=None,
               reuse_cached_jobid=None):
     """Get conditional average treatment effect
@@ -254,7 +251,7 @@ def staticgp_cate(jobid,
     x The name of a categorical variable which may have the heterogeneous treatment effect.
     control.tr The value of the treatment variable as the reference group.
     treat.tr The value of the treatment variable compared to the reference group.
-    pr.values An optional vector of user-defined values of c for PrCTE.
+    c.margin An optional vector of user-defined values of c for PrCTE.
 
     Returns
     -------
@@ -266,7 +263,7 @@ def staticgp_cate(jobid,
         'x': (None, x),
         'control.tr': (None, control_tr),
         'treat.tr': (None, treat_tr),
-        'pr.values': (None, pr_values)}
+        'c.margin': (None, c_margin)}
 
     headers=dict()
     if (str(use_cache)=="1"):
@@ -294,6 +291,8 @@ def dynamicgp(datafile=None,
               stg1_tr_hte=None,
               stg1_tr_values=None,
               stg1_tr_type="Discrete",
+	      stg1_time=None,
+	      stg1_time_value=None,
               stg1_outcome_type="Continuous",
               stg1_outcome_bound_censor="neither",
               stg1_outcome_lb=None,
@@ -302,7 +301,7 @@ def dynamicgp(datafile=None,
               stg1_outcome_censor_uv=None,
               stg1_outcome_censor_yn=None,
               stg1_outcome_link="identity",
-              stg1_pr_values=None,
+              stg1_c_margin=None,
 
               stg2_outcome=None,
               stg2_treatment=None,
@@ -312,6 +311,8 @@ def dynamicgp(datafile=None,
               stg2_tr2_hte=None,
               stg2_tr_values=None,
               stg2_tr_type="Discrete",
+	      stg2_time=None,
+	      stg2_time_value=None,
               stg2_outcome_type="Continuous",
               stg2_outcome_bound_censor="neither",
               stg2_outcome_lb=None,
@@ -320,7 +321,7 @@ def dynamicgp(datafile=None,
               stg2_outcome_censor_uv=None,
               stg2_outcome_censor_yn=None,
               stg2_outcome_link="identity",
-              stg2_pr_values=None,
+              stg2_c_margin=None,
 
               burn_num=500,
               mcmc_num=500,
@@ -347,6 +348,8 @@ def dynamicgp(datafile=None,
     stg1.x.explanatory A vector of the name of the explanatory variables for stage 1.
     stg1.x.confounding A vector of the name of the confounding variables for stage 1.
     stg1.tr.hte An optional vector specifying categorical variables which may have heterogeneous treatment effect with the treatment variable for stage 1.
+    stg1.time
+    stg1.time.value
     stg1.outcome.bound_censor The default value is "neither".
         "neither" if the intermediate outcome is not bounded or censored.
         "bounded" if the intermediate outcome is bounded.
@@ -363,13 +366,15 @@ def dynamicgp(datafile=None,
         "logit" for logit transformation.
     stg1.tr.values User-defined values for the calculation of ATE if the treatment variable is continuous for stage 1.
     stg1.tr.type The type of treatment at stage 1. "Continuous" for continuous treatment and "Discrete" for categorical treatment. The default value is "Discrete".
-    stg1.pr.values An optional vector of user-defined values of c for PrTE at stage 1.
+    stg1.c.margin An optional vector of user-defined values of c for PrTE at stage 1.
     stg2.outcome The name of the outcome variable for stage 2.
     stg2.treatment The name of the treatment variable for stage 2.
     stg2.x.explanatory A vector of the name of the explanatory variables for stage 2.
     stg2.x.confounding A vector of the name of the confounding variables for stage 2.
     stg2.tr1.hte At stage 2, an optional vector specifying cate-gorical variables which may have heterogeneoustreatment effect with the stage 1 treatment variable
     stg2.tr2.hte At stage 2, an optional vector specifying cate-gorical variables which may have heterogeneoustreatment effect with the stage 2 treatment variable
+    stg2.time
+    stg2.time.value
     stg2.outcome.bound_censor The default value is "neither".
         "neither" if the intermediate outcome is not bounded or censored.
         "bounded" if the intermediate outcome is bounded.
@@ -386,7 +391,7 @@ def dynamicgp(datafile=None,
         "logit" for logit transformation.
     stg2.tr.values User-defined values for the calculation of ATE if the treatment variable is continuous for stage 2.
     stg2.tr.type The type of treatment at stage 2. "Continuous" for continuous treatment and "Discrete" for categorical treatment. The default value is "Discrete".
-    stg2.pr.values An optional vector of user-defined values of c for PrTE at stage 2.
+    stg2.c.margin An optional vector of user-defined values of c for PrTE at stage 2.
     burn.num numeric; the number of MCMC 'burn-in' samples, i.e. number of MCMC to be discarded. The default value is 500.
     mcmc.num numeric; the number of MCMC samples after 'burn-in'. The default value is 500.
     x.categorical A vector of the name of categorical variables in data.
@@ -412,6 +417,8 @@ def dynamicgp(datafile=None,
         'stg1.tr.hte': (None, stg1_tr_hte),
         'stg1.tr.values': (None, stg1_tr_values),
         'stg1.tr.type': (None, stg1_tr_type),
+        'stg1.time': (None, stg1_time),
+        'stg1.time.value': (None, stg1_time_value),
         'stg1.outcome.type': (None, stg1_outcome_type),
         'stg1.outcome.bound_censor': (None, stg1_outcome_bound_censor),
         'stg1.outcome.lb': (None, stg1_outcome_lb),
@@ -420,7 +427,7 @@ def dynamicgp(datafile=None,
         'stg1.outcome.censor.uv': (None, stg1_outcome_censor_uv),
         'stg1.outcome.censor.yn': (None, stg1_outcome_censor_yn),
         'stg1.outcome.link': (None, stg1_outcome_link),
-        'stg1.pr.values': (None, stg1_pr_values),
+        'stg1.c.margin': (None, stg1_c_margin),
         'stg2.outcome': (None, stg2_outcome),
         'stg2.treatment': (None, stg2_treatment),
         'stg2.x.explanatory': (None, stg2_x_explanatory),
@@ -429,6 +436,8 @@ def dynamicgp(datafile=None,
         'stg2.tr2.hte': (None, stg2_tr2_hte),
         'stg2.tr.values': (None, stg2_tr_values),
         'stg2.tr.type': (None, stg2_tr_type),
+        'stg2.time': (None, stg2_time),
+        'stg2.time.value': (None, stg2_time_value),
         'stg2.outcome.type': (None, stg2_outcome_type),
         'stg2.outcome.bound_censor': (None, stg2_outcome_bound_censor),
         'stg2.outcome.lb': (None, stg2_outcome_lb),
@@ -437,7 +446,7 @@ def dynamicgp(datafile=None,
         'stg2.outcome.censor.uv': (None, stg2_outcome_censor_uv),
         'stg2.outcome.censor.yn': (None, stg2_outcome_censor_yn),
         'stg2.outcome.link': (None, stg2_outcome_link),
-        'stg2.pr.values': (None, stg2_pr_values),
+        'stg2.c.margin': (None, stg2_c_margin),
         'burn.num': (None, burn_num),
         'mcmc.num': (None, mcmc_num),
         'x.categorical': (None, x_categorical),
@@ -467,7 +476,7 @@ def dynamicgp_cate(jobid,
               x, 
               control_tr, 
               treat_tr, 
-              pr_values=None,
+              c_margin=None,
               use_cache=None,
               reuse_cached_jobid=None):
     """Get conditional average treatment effect for data with two time points.
@@ -484,7 +493,7 @@ def dynamicgp_cate(jobid,
     x The name of variable which may have the heterogeneous treatment effect. x should be a categorical variable.
     control.tr A vector of the values of the treatment variables at all stages as the reference group.
     treat.tr A vector of the values of the treatment variables at all stages compared to the reference group.
-    pr.values An optional vector of user-defined values of c for PrCTE.
+    c.margin An optional vector of user-defined values of c for PrCTE.
 
     Returns
     -------
@@ -496,7 +505,7 @@ def dynamicgp_cate(jobid,
         'x': (None, x),
         'control.tr': (None, control_tr),
         'treat.tr': (None, treat_tr),
-        'pr.values': (None, pr_values)}
+        'c.margin': (None, c_margin)}
 
     headers=dict()
     if (str(use_cache)=="1"):
