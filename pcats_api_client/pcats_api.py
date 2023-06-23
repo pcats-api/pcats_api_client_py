@@ -83,8 +83,8 @@ def staticgp(datafile=None,
              tr_values=None,
              c_margin=None,
              tr_hte=None,
-	     time=None,
-	     time_value=None,
+	         time=None,
+	         time_value=None,
              burn_num=500,
              mcmc_num=500,
              x_categorical=None,
@@ -136,6 +136,10 @@ def staticgp(datafile=None,
     mi.dataref Reference to already uploaded file that contains the imputed data in the model.
     sheet If \code{datafile} or \code{dataref} points to an Excel file this variable specifies which sheet to load.
     mi.sheet If \code{mi.datafile} or \code{mi.dataurl} points to an Excel file this variable specifies which sheet to load.
+    seed Sets the seed. The default value is 5000.
+    token Authentication token.
+    use_cache Use cached results (default True).
+
 
     Returns
     -------
@@ -187,10 +191,14 @@ def staticgp(datafile=None,
     elif (str(reuse_cached_jobid)=="0"):
         headers["X-API-Reuse-Cached-Jobid"]="0"
 
+    if token is not None:
+        headers["Authorization"]="Bearer {}".format(token)
+
     res=requests.post(_url('/api/staticgp'), files=data, headers=headers);
     return ret_jobid(res)
 
-def printgp(jobid):
+def printgp(jobid,
+            token=None):
     """Print job results
 
    Return formatted string with job results
@@ -199,6 +207,8 @@ def printgp(jobid):
     ----------
     jobid : UUID
             Job ID of the previously submitted job
+    token : string
+            Authentication token.
             
     Returns
     -------
@@ -207,10 +217,16 @@ def printgp(jobid):
 
     """
 
-    return requests.get(_url(
-        '/api/job/{}/print'.format(jobid))).content.decode("utf-8") 
+    headers=dict()
+    if token is not None:
+        headers["Authorization"]="Bearer {}".format(token)
 
-def results(jobid):
+    return requests.get(_url(
+        '/api/job/{}/print'.format(jobid)),
+        headers=headers).content.decode("utf-8") 
+
+def results(jobid,
+            token=None):
     """Return job results
 
     Return job results
@@ -219,6 +235,8 @@ def results(jobid):
     ----------
     jobid : UUID
             Job ID of the previously submitted job
+    token : string
+            Authentication token.
             
     Returns
     -------
@@ -227,14 +245,20 @@ def results(jobid):
 
     """
 
+    headers=dict()
+    if token is not None:
+        headers["Authorization"]="Bearer {}".format(token)
+
     return requests.get(_url(
-        '/api/job/{}/results'.format(jobid))).content.decode("utf-8") 
+        '/api/job/{}/results'.format(jobid)),
+        headers=headers).content.decode("utf-8") 
 
 def staticgp_cate(jobid, 
               x, 
               control_tr, 
               treat_tr, 
               c_margin=None,
+              token=None,
               use_cache=None,
               reuse_cached_jobid=None):
     """Get conditional average treatment effect
@@ -252,6 +276,8 @@ def staticgp_cate(jobid,
     control.tr The value of the treatment variable as the reference group.
     treat.tr The value of the treatment variable compared to the reference group.
     c.margin An optional vector of user-defined values of c for PrCTE.
+    token Authentication token.
+    use_cache Use cached results (default True).
 
     Returns
     -------
@@ -270,6 +296,9 @@ def staticgp_cate(jobid,
         headers["X-API-Cache"]="1"
     if (str(reuse_cached_jobid)=="1"):
         headers["X-API-Reuse-Cached-Jobid"]="1"
+
+    if token is not None:
+        headers["Authorization"]="Bearer {}".format(token)
 
     res=requests.post(_url(
         '/api/job/{}/staticgp.cate'.format(jobid)), files=data, headers=headers);
@@ -291,8 +320,8 @@ def dynamicgp(datafile=None,
               stg1_tr_hte=None,
               stg1_tr_values=None,
               stg1_tr_type="Discrete",
-	      stg1_time=None,
-	      stg1_time_value=None,
+              stg1_time=None,
+              stg1_time_value=None,
               stg1_outcome_type="Continuous",
               stg1_outcome_bound_censor="neither",
               stg1_outcome_lb=None,
@@ -311,8 +340,8 @@ def dynamicgp(datafile=None,
               stg2_tr2_hte=None,
               stg2_tr_values=None,
               stg2_tr_type="Discrete",
-	      stg2_time=None,
-	      stg2_time_value=None,
+              stg2_time=None,
+              stg2_time_value=None,
               stg2_outcome_type="Continuous",
               stg2_outcome_bound_censor="neither",
               stg2_outcome_lb=None,
@@ -399,6 +428,9 @@ def dynamicgp(datafile=None,
     mi.dataref Reference to already uploaded file that contains the imputed data in the model.
     sheet If \code{datafile} or \code{dataref} points to an Excel file this variable specifies which sheet to load.
     mi.sheet If \code{mi.datafile} or \code{mi.dataurl} points to an Excel file this variable specifies which sheet to load.
+    seed Sets the seed. The default value is 5000.
+    token Authentication token.
+    use_cache Use cached results (default True).
 
     Returns
     -------
@@ -468,6 +500,8 @@ def dynamicgp(datafile=None,
         headers["X-API-Reuse-Cached-Jobid"]="1"
     elif (str(reuse_cached_jobid)=="0"):
         headers["X-API-Reuse-Cached-Jobid"]="0"
+    if token is not None:
+        headers["Authorization"]="Bearer {}".format(token)
 
     res=requests.post(_url('/api/dynamicgp'), files=data, headers=headers);
     return ret_jobid(res)
@@ -477,6 +511,7 @@ def dynamicgp_cate(jobid,
               control_tr, 
               treat_tr, 
               c_margin=None,
+              token=None,
               use_cache=None,
               reuse_cached_jobid=None):
     """Get conditional average treatment effect for data with two time points.
@@ -494,6 +529,8 @@ def dynamicgp_cate(jobid,
     control.tr A vector of the values of the treatment variables at all stages as the reference group.
     treat.tr A vector of the values of the treatment variables at all stages compared to the reference group.
     c.margin An optional vector of user-defined values of c for PrCTE.
+    token Authentication token.
+    use_cache Use cached results (default True).
 
     Returns
     -------
@@ -512,12 +549,15 @@ def dynamicgp_cate(jobid,
         headers["X-API-Cache"]="1"
     if (str(reuse_cached_jobid)=="1"):
         headers["X-API-Reuse-Cached-Jobid"]="1"
+    if token is not None:
+        headers["Authorization"]="Bearer {}".format(token)
 
     res=requests.post(_url(
         '/api/job/{}/dynamicgp.cate'.format(jobid)), files=data, headers=headers);
     return ret_jobid(res)
 
-def uploadfile(datafile):
+def uploadfile(datafile,
+               token=None):
     """Upload a file
 
     Upload a file
@@ -534,7 +574,11 @@ def uploadfile(datafile):
         'data': (datafile, open(datafile, 'rb') if datafile!=None else None ),
         }
 
-    res=requests.post(_url('/api/uploadfile'), files=data);
+    headers=dict()
+    if token is not None:
+        headers["Authorization"]="Bearer {}".format(token)
+
+    res=requests.post(_url('/api/uploadfile'), files=data, headers=headers);
     if res.status_code==200:
         res_json = res.json()
         if 'fileref' in res_json:
