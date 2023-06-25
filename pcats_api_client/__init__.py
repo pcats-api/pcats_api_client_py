@@ -7,4 +7,4 @@ The PCATS application programming interface (API) implements two Bayesian's non 
 
 from .pcats_api import job_status, staticgp, dynamicgp, uploadfile, wait_for_result, printgp, ploturl, staticgp_cate, dynamicgp_cate, results
 
-from .pcats_api_staticgp2 import staticgp2
+# from .pcats_api_staticgp2 import staticgp2

@@ -1,0 +1,14 @@
+
+
+### Build the package (clean up dist/* first)
+
+python3 setup.py sdist bdist_wheel
+
+### Upload to test server
+
+python3 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+
+### Upload to prod
+
+python3 -m twine upload dist/*
+
